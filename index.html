@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>¿Quieres ser mi novia?</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1320;--accent:#ff4d6d;--muted:#94a3b8}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;background:linear-gradient(180deg,#071025 0%, #0f1724 100%);color:#e6eef8}
+    .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:32px}
+    .card{width:min(820px,96vw);background:linear-gradient(180deg,rgba(255,255,255,0.03), rgba(255,255,255,0.01));border-radius:16px;padding:32px;box-shadow:0 10px 30px rgba(2,6,23,0.6);position:relative;overflow:hidden}
+
+    h1{font-size:clamp(20px,4vw,36px);margin:0 0 8px}
+    p.lead{color:var(--muted);margin:0 0 24px}
+
+    .buttons{display:flex;gap:12px;align-items:center}
+    button{cursor:pointer;border:0;padding:12px 20px;border-radius:12px;font-weight:600;font-size:16px}
+    .btn-si{background:linear-gradient(90deg,#38bdf8,#6ee7b7);color:#052018;box-shadow:0 6px 18px rgba(46,229,168,0.12);}
+    .btn-no{background:transparent;border:2px solid rgba(255,255,255,0.08);color:#fff;position:relative}
+
+    .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:none;align-items:center;justify-content:center;z-index:40}
+    .modal{background:linear-gradient(180deg,#071129,#0b1630);padding:20px;border-radius:12px;width:min(420px,90vw);box-shadow:0 8px 30px rgba(2,6,23,0.6);text-align:center}
+    .modal h3{margin:0 0 8px}
+    .modal p{color:var(--muted);margin:0 0 16px}
+    .modal .row{display:flex;gap:10px;justify-content:center}
+
+    .final{display:none;position:absolute;inset:0;align-items:center;justify-content:center;padding:32px;z-index:30}
+    .final .bubble{background:linear-gradient(90deg,#121827,#0b1222);padding:24px;border-radius:14px;max-width:680px;text-align:center;box-shadow:0 10px 30px rgba(2,6,23,0.6)}
+    .final h2{margin:0 0 8px}
+    .final p{color:var(--muted);margin:0}
+
+    #confetti{position:absolute;inset:0;pointer-events:none;z-index:50}
+    .hint{position:absolute;right:18px;top:18px;color:var(--muted);font-size:12px}
+
+    @media (max-width:520px){.buttons{flex-direction:column;align-items:stretch}button{width:100%}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" role="main">
+      <div class="hint">(es un poco simple peroo cumple su funcion amor ;3)</div>
+      <h1>Ola mi amor, Leen piensalo bien ;3</h1>
+      <p class="lead">Lo estuve haciendoo esto, es algo importante... Quieres ser mi novia?</p>
+
+      <div class="buttons">
+        <button class="btn-si" id="btnSi">Sí</button>
+        <button class="btn-no" id="btnNo">No</button>
+      </div>
+
+      <h2 id="mensajePensalo" style="display:none;text-align:center;margin-top:20px;color:#6ee7b7;">Yo sé q sí, piénsalo bien porfa 💭</h2>
+
+      <div class="final" id="final">
+        <div class="bubble" id="finalBubble">
+          <h2 id="finalTitle">¡Sabia q si, aunque sabia q ibas a decir si!</h2>
+          <p id="finalText">Te amo mi amor.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h3 id="modalTitle">¿Tas aún más segura?</h3>
+      <p id="modalMessage">¿De tener a un loco como yo? 😜 Aún más sabiendo que estamos un poco a la distancia...</p>
+      <div class="row">
+        <button class="btn-no" id="modalNo">No</button>
+        <button class="btn-si" id="modalSi">Sí, acepto</button>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="confetti"></canvas>
+
+  <script>
+    const redirectUrl = '';
+
+    const textos = {
+      mensajePositivoTitulo: '😻',
+      mensajePositivo: 'Mi amor, aunque es rapido la verdad si quieroo pasar mi tiempo contigo, aunque estemos a distancia no es para siempre y com dicen por ahi, ausente pero presente, contigo mis dias son mas hermosos y divinos, quiero tratar de caerte bien a tu familia y llegar a ser tu ultimo amor sos tan especial q viajaria apenas pudiera a mexico y quedarme contigo o traerte, alguna de las dos :3. ❤️'
+    };
+
+    const btnNo = document.getElementById('btnNo');
+    const btnSi = document.getElementById('btnSi');
+    const backdrop = document.getElementById('backdrop');
+    const modalNo = document.getElementById('modalNo');
+    const modalSi = document.getElementById('modalSi');
+    const final = document.getElementById('final');
+    const finalTitle = document.getElementById('finalTitle');
+    const finalText = document.getElementById('finalText');
+    const mensajePensalo = document.getElementById('mensajePensalo');
+
+    function moveNoButtonRandomly() {
+      const card = document.querySelector('.card').getBoundingClientRect();
+      const maxX = Math.max(0, card.width - btnNo.offsetWidth - 24);
+      const maxY = Math.max(0, card.height - btnNo.offsetHeight - 24);
+      const x = Math.floor(Math.random() * maxX);
+      const y = Math.floor(Math.random() * maxY);
+      btnNo.style.transform = `translate(${x}px, ${y}px)`;
+    }
+
+    btnNo.addEventListener('mouseenter', moveNoButtonRandomly);
+    btnNo.addEventListener('touchstart', (e)=>{ e.preventDefault(); moveNoButtonRandomly(); });
+
+    btnSi.addEventListener('click', ()=>{ backdrop.style.display = 'flex'; });
+
+    modalNo.addEventListener('click', ()=>{ backdrop.style.display = 'none'; mensajePensalo.style.display = 'block'; });
+
+    modalSi.addEventListener('click', ()=>{
+      backdrop.style.display = 'none';
+      finalTitle.textContent = textos.mensajePositivoTitulo;
+      finalText.textContent = textos.mensajePositivo;
+      final.style.display = 'flex';
+      launchConfetti();
+
+      if (redirectUrl && redirectUrl.trim() !== ''){
+        setTimeout(()=>{ window.location.href = redirectUrl; }, 3000);
+      }
+    });
+
+    const canvas = document.getElementById('confetti');
+    const ctx = canvas.getContext('2d');
+    let W, H;
+    function resize(){ W=canvas.width=innerWidth; H=canvas.height=innerHeight; }
+    addEventListener('resize', resize); resize();
+
+    function random(min,max){ return Math.random()*(max-min)+min }
+
+    function launchConfetti(){
+      const pieces = [];
+      const count = 120;
+      for(let i=0;i<count;i++){
+        pieces.push({x:random(0,W), y:random(-H,0), r:random(6,12), d:random(2,10), tilt:random(-0.5,0.5), color: `hsl(${~~random(0,360)},70%,60%)`});
+      }
+      let t=0;
+      const anim = setInterval(()=>{
+        ctx.clearRect(0,0,W,H);
+        t+=1;
+        for(const p of pieces){
+          p.y += Math.sin(t/10) + p.d/2;
+          p.x += Math.cos(t/10) * 0.5;
+          p.tilt += 0.1;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.tilt);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r*0.6);
+          ctx.restore();
+        }
+        if (pieces.every(p=>p.y>H+40)) { clearInterval(anim); ctx.clearRect(0,0,W,H); }
+      },16);
+    }
+  </script>
+</body>
+</html>
